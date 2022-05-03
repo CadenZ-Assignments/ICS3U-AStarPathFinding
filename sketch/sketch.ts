@@ -1,9 +1,6 @@
-//ok. so at the top here, gridWidth and gridHeight is how many cells we should have on the x and y axis. in this case im just using 5, but we can change whenever we want to.
-
-
 // the grid dimensions
-const gridWidth = 5;
-const gridHeight = 5;
+const gridWidth = 50;
+const gridHeight = 50;
 
 // this is the canvas size. it is used to initialize the canvas. it is also used to calculate how big each cell should be to fit the entire canvas.
 
@@ -33,8 +30,8 @@ let closedSet = new Array<Cell>();
 
 // startCell is used by A* pathfinding as well. It represents where the pathfinding starts. End represents the end.
 
-let startCell;
-let endCell;
+let startCell: Cell;
+let endCell: Cell;
 
 // setup function is setting up how big each cell is based on the canvas dimensions and grid dimensions.
 // it also creates the canvas and sets up the grid.
@@ -68,11 +65,11 @@ function draw() {
   for (let i = 0; i < closedSet.length; i++) {
     closedSet[i].render(color(255, 0, 0));
   }
-  
+
   // path finding
   if (openSet.length > 0) {
     // still have cells left to evaluate
-    
+
     // find the cell with the lowest F value
     let winningIndex = 0;
 
@@ -83,13 +80,42 @@ function draw() {
     }
 
     let winningCell = openSet[winningIndex];
-    
+
     if (winningCell == endCell) {
       console.log("reached end");
+      return;
     }
 
-    // closedSet.push(winningCell);
-    
+    // basically removes the winning cell from the open set
+    openSet = openSet.filter((cell) => cell != winningCell);
+    closedSet.push(winningCell);
+
+    /**
+     * Instead of initializing neighbors when grid is being setup and storing it in the cell, we are getting the neighbors at algorithm run time.
+     */
+    let neighbors: Array<Cell> = Helper.getNeighbors(winningCell);
+    for (let i = 0; i < neighbors.length; i++) {
+      let neighbor = neighbors[i];
+      
+      // if closedSet does not contain  
+      if (closedSet.indexOf(neighbor) == -1) {
+        var tempG = winningCell.gCost + 1;
+        
+        // if openSet contains
+        if (openSet.indexOf(neighbor) != -1) {
+          if (tempG < neighbor.gCost) {
+            neighbor.gCost = tempG;
+          }
+        } else {
+          neighbor.gCost = tempG;
+          openSet.push(neighbor);
+        }
+
+        neighbor.hCost = neighbor.position.distance(endCell.position);
+        neighbor.fCost = neighbor.gCost + neighbor.hCost;
+      }
+    }
+
   } else {
     // no solution
   }
@@ -108,7 +134,7 @@ namespace Helper {
   // you have 5 cells horizontally on every column, right?
   // each one of those is 1 array in the first array.
   // each column also contains 5 cells. therefore we have a 2d array. aka a 5x5 grid.
- 
+
   /**
   * Instead using 1 loop to fill the rows, another to fill the "spots". only using 1 loop in total.
   */
@@ -130,13 +156,46 @@ namespace Helper {
     if (!isValidPosition(start) || !isValidPosition(end)) {
       return;
     }
-  
+
     startCell = grid[start.x][start.y];
     endCell = grid[end.x][end.y];
     openSet.push(startCell);
   }
-  
+
   export function isValidPosition(pos: Position): boolean {
     return pos.x < gridWidth && pos.x >= 0 && pos.y < gridHeight && pos.y >= 0;
+  }
+
+  
+  
+  const corners = false;
+
+  export function getNeighbors(cell: Cell): Array<Cell>
+  {
+    var neighbors = new Array<Cell>();
+
+    for (var i = -1; i <= 1; i++) {
+      for (var j = -1; j <= 1; j++) {
+        // the base node itself
+        if (i == 0 && j == 0) {
+          continue;
+        }
+
+        if (!corners && Math.abs(i) + Math.abs(j) > 1) {
+          continue;
+        }
+
+        var x = cell.position.x + i;
+        var y = cell.position.y + j;
+        var pos = new Position(x, y);
+
+        if (!isValidPosition(pos)) continue;
+
+        grid[x][y].parent = cell;
+        neighbors.push(grid[x][y]);
+      }
+    }
+
+    return neighbors;
   }
 }

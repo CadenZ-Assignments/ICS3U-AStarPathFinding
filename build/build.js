@@ -1,18 +1,19 @@
 var Cell = (function () {
     function Cell(position) {
         this._position = position;
-        this._fCost = 0;
-        this._gCost = 0;
-        this._hCost = 0;
+        this.parent = null;
+        this.fCost = 0;
+        this.gCost = 0;
+        this.hCost = 0;
     }
     Cell.prototype.render = function (color) {
         fill(color);
         noStroke();
         rect(this._position.trueX, this._position.trueY, Cell.cellWidth - 1, Cell.cellHeight - 1);
     };
-    Object.defineProperty(Cell.prototype, "fCost", {
+    Object.defineProperty(Cell.prototype, "position", {
         get: function () {
-            return this._fCost;
+            return this._position;
         },
         enumerable: true,
         configurable: true
@@ -100,12 +101,31 @@ function draw() {
                 winningIndex = i;
             }
         }
-        var winningCell = openSet[winningIndex];
-        if (winningCell == endCell) {
+        var winningCell_1 = openSet[winningIndex];
+        if (winningCell_1 == endCell) {
             console.log("reached end");
+            return;
         }
-        openSet.pus;
-        closedSet.push(winningCell);
+        openSet = openSet.filter(function (cell) { return cell != winningCell_1; });
+        closedSet.push(winningCell_1);
+        var neighbors = Helper.getNeighbors(winningCell_1);
+        for (var i = 0; i < neighbors.length; i++) {
+            var neighbor = neighbors[i];
+            if (closedSet.indexOf(neighbor) == -1) {
+                var tempG = winningCell_1.gCost + 1;
+                if (openSet.indexOf(neighbor) != -1) {
+                    if (tempG < neighbor.gCost) {
+                        neighbor.gCost = tempG;
+                    }
+                }
+                else {
+                    neighbor.gCost = tempG;
+                    openSet.push(neighbor);
+                }
+                neighbor.hCost = neighbor.position.distance(endCell.position);
+                neighbor.fCost = neighbor.gCost + neighbor.hCost;
+            }
+        }
     }
     else {
     }
@@ -135,5 +155,28 @@ var Helper;
         return pos.x < gridWidth && pos.x >= 0 && pos.y < gridHeight && pos.y >= 0;
     }
     Helper.isValidPosition = isValidPosition;
+    var corners = false;
+    function getNeighbors(cell) {
+        var neighbors = new Array();
+        for (var i = -1; i <= 1; i++) {
+            for (var j = -1; j <= 1; j++) {
+                if (i == 0 && j == 0) {
+                    continue;
+                }
+                if (!corners && Math.abs(i) + Math.abs(j) > 1) {
+                    continue;
+                }
+                var x = cell.position.x + i;
+                var y = cell.position.y + j;
+                var pos = new Position(x, y);
+                if (!isValidPosition(pos))
+                    continue;
+                grid[x][y].parent = cell;
+                neighbors.push(grid[x][y]);
+            }
+        }
+        return neighbors;
+    }
+    Helper.getNeighbors = getNeighbors;
 })(Helper || (Helper = {}));
 //# sourceMappingURL=build.js.map
