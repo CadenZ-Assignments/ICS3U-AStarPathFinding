@@ -1,6 +1,7 @@
 class Cell {
-  public static readonly nodeSize: number = 16;
-
+  public static cellWidth: number = 16;
+  public static cellHeight: number = 16;
+  
   private readonly _position: Position;
   private _fCost: number;
   private _gCost: number;
@@ -14,11 +15,11 @@ class Cell {
   }
 
   render() {
-    rect(
-      this._position.x, 
-      this._position.y,
-      Cell.nodeSize,
-      Cell.nodeSize
-    );
+    console.log(this._position.x);
+    console.log(this._position.y);
+    
+    fill(255);
+    stroke(10);
+    rect(this._position.trueX, this._position.trueY, Cell.cellWidth - 1, Cell.cellHeight - 1);
   }
 }

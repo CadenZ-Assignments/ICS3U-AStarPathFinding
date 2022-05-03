@@ -12,8 +12,8 @@ class Position {
     this._x = x;
     this._y = y;
 
-    this._trueX = x*Cell.nodeSize;
-    this._trueY = x*Cell.nodeSize;
+    this._trueX = x*Cell.cellWidth;
+    this._trueY = y*Cell.cellHeight;
   }
 
   public get x() {

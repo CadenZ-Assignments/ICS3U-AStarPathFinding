@@ -6,17 +6,22 @@ var Cell = (function () {
         this._hCost = 0;
     }
     Cell.prototype.render = function () {
-        rect(this._position.x, this._position.y, Cell.nodeSize, Cell.nodeSize);
+        console.log(this._position.x);
+        console.log(this._position.y);
+        fill(255);
+        stroke(10);
+        rect(this._position.trueX, this._position.trueY, Cell.cellWidth - 1, Cell.cellHeight - 1);
     };
-    Cell.nodeSize = 16;
+    Cell.cellWidth = 16;
+    Cell.cellHeight = 16;
     return Cell;
 }());
 var Position = (function () {
     function Position(x, y) {
         this._x = x;
         this._y = y;
-        this._trueX = x * Cell.nodeSize;
-        this._trueY = x * Cell.nodeSize;
+        this._trueX = x * Cell.cellWidth;
+        this._trueY = y * Cell.cellHeight;
     }
     Object.defineProperty(Position.prototype, "x", {
         get: function () {
@@ -56,27 +61,36 @@ var Position = (function () {
 }());
 var gridWidth = 5;
 var gridHeight = 5;
-var grid = new Array(gridWidth);
+var canvasWidth = 800;
+var canvasHeight = 800;
+var grid = new Array();
 var openSet = new Array();
 var closedSet = new Array();
 var startCell;
 var endcell;
 function setup() {
-    createCanvas(200, 200);
+    Cell.cellWidth = canvasWidth / gridWidth;
+    Cell.cellHeight = canvasHeight / gridHeight;
+    createCanvas(canvasWidth, canvasHeight);
     Helper.setupGrid();
 }
 function draw() {
-    background(100);
+    background(0);
+    for (var i = 0; i < gridWidth; i++) {
+        for (var j = 0; j < gridHeight; j++) {
+            grid[i][j].render();
+        }
+    }
 }
 var Helper;
 (function (Helper) {
     function setupGrid() {
         for (var i = 0; i < gridWidth; i++) {
-            var row = new Array(gridHeight);
+            var column = new Array();
             for (var j = 0; j < gridHeight; j++) {
-                row.push(new Cell(new Position(i, j)));
+                column.push(new Cell(new Position(i, j)));
             }
-            grid.push(row);
+            grid.push(column);
         }
     }
     Helper.setupGrid = setupGrid;
@@ -92,6 +106,5 @@ var Helper;
         return pos.x < gridWidth && pos.x >= 0 && pos.y < gridHeight && pos.y >= 0;
     }
     Helper.isValidPosition = isValidPosition;
-    8;
 })(Helper || (Helper = {}));
 //# sourceMappingURL=build.js.map
