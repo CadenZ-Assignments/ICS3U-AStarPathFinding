@@ -14,12 +14,13 @@ class Cell {
     this._hCost = 0;
   }
 
-  render() {
-    console.log(this._position.x);
-    console.log(this._position.y);
-    
-    fill(255);
-    stroke(10);
+  render(color: any) {
+    fill(color);
+    noStroke();
     rect(this._position.trueX, this._position.trueY, Cell.cellWidth - 1, Cell.cellHeight - 1);
+  }
+
+  public get fCost() {
+    return this._fCost;
   }
 }
