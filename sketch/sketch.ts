@@ -1,6 +1,6 @@
 // the grid dimensions
-const gridWidth = 50;
-const gridHeight = 50;
+const gridWidth = 20;
+const gridHeight = 20;
 
 // this is the canvas size. it is used to initialize the canvas. it is also used to calculate how big each cell should be to fit the entire canvas.
 
@@ -29,9 +29,11 @@ let openSet = new Array<Cell>();
 let closedSet = new Array<Cell>();
 
 // startCell is used by A* pathfinding as well. It represents where the pathfinding starts. End represents the end.
-
 let startCell: Cell;
 let endCell: Cell;
+
+// finished path
+let path: Array<Position> = new Array<Position>();
 
 // setup function is setting up how big each cell is based on the canvas dimensions and grid dimensions.
 // it also creates the canvas and sets up the grid.
@@ -66,6 +68,12 @@ function draw() {
     closedSet[i].render(color(255, 0, 0));
   }
 
+  // render path
+  for (let i = 0; i < path.length; i++) {
+    let pos = path[i];
+    grid[pos.x][pos.y].render(color(0, 0, 255));
+  }
+
   // path finding
   if (openSet.length > 0) {
     // still have cells left to evaluate
@@ -80,9 +88,14 @@ function draw() {
     }
 
     let winningCell = openSet[winningIndex];
+    Helper.retracePath(winningCell, path);
 
     if (winningCell == endCell) {
-      console.log("reached end");
+      console.log("Annnnnnd we are done");
+      // clear out the open set as we are done.
+      openSet = [];
+      // add the end cell to path as well because retracePath does not add the base position to the array
+      path.push(winningCell.position);
       return;
     }
 
@@ -96,11 +109,11 @@ function draw() {
     let neighbors: Array<Cell> = Helper.getNeighbors(winningCell);
     for (let i = 0; i < neighbors.length; i++) {
       let neighbor = neighbors[i];
-      
+
       // if closedSet does not contain  
       if (closedSet.indexOf(neighbor) == -1) {
-        var tempG = winningCell.gCost + 1;
-        
+        var tempG = neighbor.position.distance(startCell.position);
+
         // if openSet contains
         if (openSet.indexOf(neighbor) != -1) {
           if (tempG < neighbor.gCost) {
@@ -113,6 +126,7 @@ function draw() {
 
         neighbor.hCost = neighbor.position.distance(endCell.position);
         neighbor.fCost = neighbor.gCost + neighbor.hCost;
+        neighbor.parent = winningCell;
       }
     }
 
@@ -166,12 +180,11 @@ namespace Helper {
     return pos.x < gridWidth && pos.x >= 0 && pos.y < gridHeight && pos.y >= 0;
   }
 
-  
-  
-  const corners = false;
 
-  export function getNeighbors(cell: Cell): Array<Cell>
-  {
+
+  const corners = true;
+
+  export function getNeighbors(cell: Cell): Array<Cell> {
     var neighbors = new Array<Cell>();
 
     for (var i = -1; i <= 1; i++) {
@@ -191,11 +204,24 @@ namespace Helper {
 
         if (!isValidPosition(pos)) continue;
 
-        grid[x][y].parent = cell;
         neighbors.push(grid[x][y]);
       }
     }
 
     return neighbors;
+  }
+
+  /**
+   * instead of using a loop we are using a recursive function.
+   */
+  export function retracePath(base: Cell, parents: Array<Position>) {
+    if (base.parent === null)
+    {
+      parents.push(base.position);
+      return;
+    }
+
+    parents.push(base.parent.position);
+    retracePath(base.parent, parents);
   }
 }
