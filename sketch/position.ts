@@ -42,4 +42,13 @@ class Position {
     // d = sqrt((x2-x1)^2 + (y2-y1)^2)
     return Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2));
   }
+
+  public static trueToGridPos(trueX: number, trueY: number): Position {
+    let x: number, y: number;
+
+    x = Math.floor(trueX / Cell.cellWidth);
+    y = Math.floor(trueY / Cell.cellHeight);
+
+    return new Position(x, y);
+  }
 }

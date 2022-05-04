@@ -38,6 +38,8 @@ let path: Array<Position> = new Array<Position>();
 // setup function is setting up how big each cell is based on the canvas dimensions and grid dimensions.
 // it also creates the canvas and sets up the grid.
 
+let restartButton: any;
+
 function setup() {
   Cell.cellWidth = canvasWidth / gridWidth;
   Cell.cellHeight = canvasHeight / gridHeight;
@@ -45,6 +47,12 @@ function setup() {
   Helper.setupGrid();
   // setup path to go from top left to bottom right
   Helper.initPath(new Position(0, 0), new Position(gridWidth - 1, gridHeight - 1));
+
+  restartButton = createButton("Restart path finding");
+  restartButton.position(canvasWidth/2, canvasHeight + 50);
+  restartButton.mousePressed(function() {
+    Helper.initPath(new Position(0, 0), new Position(gridWidth - 1, gridHeight - 1));
+  });
 }
 
 // draw function is self explanatory. It renders a background, and it renders all the cells on the grid.
@@ -88,12 +96,21 @@ function draw() {
     }
 
     let winningCell = openSet[winningIndex];
+    
+    // needs to reset path before calling retrace path because retrace path does not clear the path array. It only adds path to it.
+    path = [];
     Helper.retracePath(winningCell, path);
 
     if (winningCell == endCell) {
       console.log("Annnnnnd we are done");
       // clear out the open set as we are done.
       openSet = [];
+      closedSet = [];
+
+      // same thing
+      path = [];
+      Helper.retracePath(winningCell, path);
+
       // add the end cell to path as well because retracePath does not add the base position to the array
       path.push(winningCell.position);
       return;
@@ -110,36 +127,49 @@ function draw() {
     for (let i = 0; i < neighbors.length; i++) {
       let neighbor = neighbors[i];
 
+      // if the neighbor is 
+      if (neighbor.isObstructed) continue;
+
       // if closedSet does not contain  
       if (closedSet.indexOf(neighbor) == -1) {
-        var tempG = neighbor.position.distance(startCell.position);
+        var tempG = neighbor.position.distance(endCell.position);
 
+        let newG: boolean = false;
         // if openSet contains
         if (openSet.indexOf(neighbor) != -1) {
           if (tempG < neighbor.gCost) {
             neighbor.gCost = tempG;
+            newG = true;
           }
         } else {
           neighbor.gCost = tempG;
+          newG = true;
           openSet.push(neighbor);
         }
 
-        neighbor.hCost = neighbor.position.distance(endCell.position);
-        neighbor.fCost = neighbor.gCost + neighbor.hCost;
-        neighbor.parent = winningCell;
+        if (newG) {
+          neighbor.hCost = neighbor.position.distance(endCell.position);
+          neighbor.fCost = neighbor.gCost + neighbor.hCost;
+          neighbor.parent = winningCell;
+        }
       }
     }
 
   } else {
-    // no solution
+    if (path.filter((element) => element == endCell.position).length == 0) {
+      path = [];
+      console.log("No Solution");
+      return;
+    }
   }
 }
 
-
-
-
-
-
+function mouseClicked() {
+  let gridPos = Position.trueToGridPos(mouseX, mouseY);
+  if (Helper.isValidPosition(gridPos)) {
+    grid[gridPos.x][gridPos.y].toggleObstructed();
+  }
+}
 
 // helper functions for the program
 namespace Helper {
@@ -173,6 +203,9 @@ namespace Helper {
 
     startCell = grid[start.x][start.y];
     endCell = grid[end.x][end.y];
+    openSet = [];
+    closedSet = [];
+    path = [];
     openSet.push(startCell);
   }
 

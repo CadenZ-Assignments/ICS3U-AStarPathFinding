@@ -1,19 +1,35 @@
 var Cell = (function () {
     function Cell(position) {
         this._position = position;
+        this._isObstructed = false;
         this.parent = null;
         this.fCost = 0;
         this.gCost = 0;
         this.hCost = 0;
     }
     Cell.prototype.render = function (color) {
-        fill(color);
+        if (this._isObstructed) {
+            fill(0);
+        }
+        else {
+            fill(color);
+        }
         noStroke();
         rect(this._position.trueX, this._position.trueY, Cell.cellWidth - 1, Cell.cellHeight - 1);
     };
     Object.defineProperty(Cell.prototype, "position", {
         get: function () {
             return this._position;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Cell.prototype.toggleObstructed = function () {
+        this._isObstructed = !this._isObstructed;
+    };
+    Object.defineProperty(Cell.prototype, "isObstructed", {
+        get: function () {
+            return this._isObstructed;
         },
         enumerable: true,
         configurable: true
@@ -63,6 +79,12 @@ var Position = (function () {
     Position.distanceBetween = function (a, b) {
         return Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2));
     };
+    Position.trueToGridPos = function (trueX, trueY) {
+        var x, y;
+        x = Math.floor(trueX / Cell.cellWidth);
+        y = Math.floor(trueY / Cell.cellHeight);
+        return new Position(x, y);
+    };
     return Position;
 }());
 var gridWidth = 20;
@@ -75,12 +97,18 @@ var closedSet = new Array();
 var startCell;
 var endCell;
 var path = new Array();
+var restartButton;
 function setup() {
     Cell.cellWidth = canvasWidth / gridWidth;
     Cell.cellHeight = canvasHeight / gridHeight;
     createCanvas(canvasWidth, canvasHeight);
     Helper.setupGrid();
     Helper.initPath(new Position(0, 0), new Position(gridWidth - 1, gridHeight - 1));
+    restartButton = createButton("Restart path finding");
+    restartButton.position(canvasWidth / 2, canvasHeight + 50);
+    restartButton.mousePressed(function () {
+        Helper.initPath(new Position(0, 0), new Position(gridWidth - 1, gridHeight - 1));
+    });
 }
 function draw() {
     background(0);
@@ -107,10 +135,14 @@ function draw() {
             }
         }
         var winningCell_1 = openSet[winningIndex];
+        path = [];
         Helper.retracePath(winningCell_1, path);
         if (winningCell_1 == endCell) {
             console.log("Annnnnnd we are done");
             openSet = [];
+            closedSet = [];
+            path = [];
+            Helper.retracePath(winningCell_1, path);
             path.push(winningCell_1.position);
             return;
         }
@@ -119,24 +151,42 @@ function draw() {
         var neighbors = Helper.getNeighbors(winningCell_1);
         for (var i = 0; i < neighbors.length; i++) {
             var neighbor = neighbors[i];
+            if (neighbor.isObstructed)
+                continue;
             if (closedSet.indexOf(neighbor) == -1) {
-                var tempG = neighbor.position.distance(startCell.position);
+                var tempG = neighbor.position.distance(endCell.position);
+                var newG = false;
                 if (openSet.indexOf(neighbor) != -1) {
                     if (tempG < neighbor.gCost) {
                         neighbor.gCost = tempG;
+                        newG = true;
                     }
                 }
                 else {
                     neighbor.gCost = tempG;
+                    newG = true;
                     openSet.push(neighbor);
                 }
-                neighbor.hCost = neighbor.position.distance(endCell.position);
-                neighbor.fCost = neighbor.gCost + neighbor.hCost;
-                neighbor.parent = winningCell_1;
+                if (newG) {
+                    neighbor.hCost = neighbor.position.distance(endCell.position);
+                    neighbor.fCost = neighbor.gCost + neighbor.hCost;
+                    neighbor.parent = winningCell_1;
+                }
             }
         }
     }
     else {
+        if (path.filter(function (element) { return element == endCell.position; }).length == 0) {
+            path = [];
+            console.log("No Solution");
+            return;
+        }
+    }
+}
+function mouseClicked() {
+    var gridPos = Position.trueToGridPos(mouseX, mouseY);
+    if (Helper.isValidPosition(gridPos)) {
+        grid[gridPos.x][gridPos.y].toggleObstructed();
     }
 }
 var Helper;
@@ -157,6 +207,9 @@ var Helper;
         }
         startCell = grid[start.x][start.y];
         endCell = grid[end.x][end.y];
+        openSet = [];
+        closedSet = [];
+        path = [];
         openSet.push(startCell);
     }
     Helper.initPath = initPath;
