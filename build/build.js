@@ -1,14 +1,14 @@
 var Cell = (function () {
     function Cell(position) {
         this._position = position;
-        this._isObstructed = false;
+        this.isObstructed = false;
         this.parent = null;
         this.fCost = 0;
         this.gCost = 0;
         this.hCost = 0;
     }
     Cell.prototype.render = function (color) {
-        if (this._isObstructed) {
+        if (this.isObstructed) {
             fill(0);
         }
         else {
@@ -25,15 +25,8 @@ var Cell = (function () {
         configurable: true
     });
     Cell.prototype.toggleObstructed = function () {
-        this._isObstructed = !this._isObstructed;
+        this.isObstructed = !this.isObstructed;
     };
-    Object.defineProperty(Cell.prototype, "isObstructed", {
-        get: function () {
-            return this._isObstructed;
-        },
-        enumerable: true,
-        configurable: true
-    });
     Cell.cellWidth = 16;
     Cell.cellHeight = 16;
     return Cell;
@@ -105,7 +98,8 @@ function setup() {
     Helper.setupGrid();
     Helper.initPath(new Position(0, 0), new Position(gridWidth - 1, gridHeight - 1));
     restartButton = createButton("Restart path finding");
-    restartButton.position(canvasWidth / 2, canvasHeight + 50);
+    restartButton.position(canvasWidth / 2 - 100, canvasHeight + 50);
+    restartButton.size(200, 30);
     restartButton.mousePressed(function () {
         Helper.initPath(new Position(0, 0), new Position(gridWidth - 1, gridHeight - 1));
     });
@@ -183,11 +177,21 @@ function draw() {
         }
     }
 }
-function mouseClicked() {
-    var gridPos = Position.trueToGridPos(mouseX, mouseY);
+var dragging = false;
+var createObstacle = false;
+function mouseDragged(event) {
+    var gridPos = Position.trueToGridPos(event.offsetX, event.offsetY);
     if (Helper.isValidPosition(gridPos)) {
-        grid[gridPos.x][gridPos.y].toggleObstructed();
+        var cell = grid[gridPos.x][gridPos.y];
+        if (!dragging) {
+            dragging = true;
+            createObstacle = !cell.isObstructed;
+        }
+        cell.isObstructed = createObstacle;
     }
+}
+function mouseReleased() {
+    dragging = false;
 }
 var Helper;
 (function (Helper) {
@@ -217,7 +221,7 @@ var Helper;
         return pos.x < gridWidth && pos.x >= 0 && pos.y < gridHeight && pos.y >= 0;
     }
     Helper.isValidPosition = isValidPosition;
-    var corners = true;
+    var corners = false;
     function getNeighbors(cell) {
         var neighbors = new Array();
         for (var i = -1; i <= 1; i++) {

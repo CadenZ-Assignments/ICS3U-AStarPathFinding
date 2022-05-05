@@ -8,23 +8,10 @@ const gridHeight = 20;
 const canvasWidth = 800;
 const canvasHeight = 800;
 
-// this is an 2D array, so it looks something like this:
-// [
-// [],
-// []
-//]
-// it is an array that contains arrrays. in this case used to represent the grid. because the grid is a 2d space.
-// 0 1 2 3 4
-// 1
-// 2
-// 3
-
 // the grid we are gonna be working with.
 const grid = new Array<Array<Cell>>();
 
 // the openset&closedSet is a part of the a* pathfinding algorithm. openSet represents cells that we have NOT evaluated yet. closedSet represents cells that we HAVE already evaluated. By evaluated i mean evaluated as a possible path in the pathfinding process.
-
-// a* stuff
 let openSet = new Array<Cell>();
 let closedSet = new Array<Cell>();
 
@@ -37,8 +24,7 @@ let path: Array<Position> = new Array<Position>();
 
 // setup function is setting up how big each cell is based on the canvas dimensions and grid dimensions.
 // it also creates the canvas and sets up the grid.
-
-let restartButton: any;
+let restartButton: p5.Element;
 
 function setup() {
   Cell.cellWidth = canvasWidth / gridWidth;
@@ -49,7 +35,8 @@ function setup() {
   Helper.initPath(new Position(0, 0), new Position(gridWidth - 1, gridHeight - 1));
 
   restartButton = createButton("Restart path finding");
-  restartButton.position(canvasWidth/2, canvasHeight + 50);
+  restartButton.position(canvasWidth/2 - 100, canvasHeight + 50);
+  restartButton.size(200, 30)
   restartButton.mousePressed(function() {
     Helper.initPath(new Position(0, 0), new Position(gridWidth - 1, gridHeight - 1));
   });
@@ -164,11 +151,25 @@ function draw() {
   }
 }
 
-function mouseClicked() {
-  let gridPos = Position.trueToGridPos(mouseX, mouseY);
+let dragging: boolean = false;
+let createObstacle: boolean = false;
+
+function mouseDragged(event: MouseEvent) {
+  let gridPos = Position.trueToGridPos(event.offsetX, event.offsetY);
   if (Helper.isValidPosition(gridPos)) {
-    grid[gridPos.x][gridPos.y].toggleObstructed();
+    let cell: Cell = grid[gridPos.x][gridPos.y];
+    
+    if (!dragging) {
+      dragging = true;
+      createObstacle = !cell.isObstructed;
+    }
+
+    cell.isObstructed = createObstacle;
   }
+}
+
+function mouseReleased() {
+  dragging = false;
 }
 
 // helper functions for the program
@@ -215,7 +216,7 @@ namespace Helper {
 
 
 
-  const corners = true;
+  const corners = false;
 
   export function getNeighbors(cell: Cell): Array<Cell> {
     var neighbors = new Array<Cell>();

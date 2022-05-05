@@ -3,7 +3,7 @@ class Cell {
   public static cellHeight: number = 16;
   
   private readonly _position: Position;
-  private _isObstructed: boolean;
+  public isObstructed: boolean;
   public parent: Cell;
   public fCost: number;
   public gCost: number;
@@ -11,7 +11,7 @@ class Cell {
 
   constructor(position: Position) {
     this._position = position;
-    this._isObstructed = false;
+    this.isObstructed = false;
     this.parent = null;
     this.fCost = 0;
     this.gCost = 0;
@@ -19,7 +19,7 @@ class Cell {
   }
 
   public render(color: any) {
-    if (this._isObstructed) {
+    if (this.isObstructed) {
       fill(0);
     } else {
       fill(color);
@@ -33,10 +33,6 @@ class Cell {
   }
 
   public toggleObstructed() {
-    this._isObstructed = !this._isObstructed;
-  }
-
-  public get isObstructed() {
-    return this._isObstructed;
+    this.isObstructed = !this.isObstructed;
   }
 }
