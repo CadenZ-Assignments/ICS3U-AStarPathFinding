@@ -30,10 +30,16 @@ function setup() {
   Cell.cellWidth = canvasWidth / gridWidth;
   Cell.cellHeight = canvasHeight / gridHeight;
   createCanvas(canvasWidth, canvasHeight);
+  
+  // * the process starts here
+  // * this function is defined on line 189
+  // * it basically initializes the 2d array.
   Helper.setupGrid();
   // setup path to go from top left to bottom right
+  // * this initializes the path, tells the program that we are going to try to path find from left top to bottom right.
   Helper.initPath(new Position(0, 0), new Position(gridWidth - 1, gridHeight - 1));
 
+  // * this is a button that allows you to restart the process of path finding
   restartButton = createButton("Restart path finding");
   restartButton.position(canvasWidth/2 - 100, canvasHeight + 50);
   restartButton.size(200, 30)
@@ -48,6 +54,7 @@ function draw() {
   background(0);
 
   // renders the grid
+  // * this takes all the cells on the grid and draws a rectangle.
   for (let i = 0; i < gridWidth; i++) {
     for (let j = 0; j < gridHeight; j++) {
       grid[i][j].render(255);
@@ -55,39 +62,49 @@ function draw() {
   }
 
   // render open and close set over original grid
+  // * this takes all the cells left to evaluate and draws a green rectangle
   for (let i = 0; i < openSet.length; i++) {
     openSet[i].render(color(0, 255, 0));
   }
 
+  // * this takes all the already evaluated cells and draws a red rectangle
   for (let i = 0; i < closedSet.length; i++) {
     closedSet[i].render(color(255, 0, 0));
   }
 
   // render path
+  // * this takes the optimal path and draws a blue rectangle.
   for (let i = 0; i < path.length; i++) {
     let pos = path[i];
     grid[pos.x][pos.y].render(color(0, 0, 255));
   }
 
   // path finding
+  // * path finding starts here, only continue if there are more cells to evaluate 
   if (openSet.length > 0) {
     // still have cells left to evaluate
 
     // find the cell with the lowest F value
+    // * F Value is the "cost". Each cell has a g cost which is pretty much how far away the cell is from the starting point. A H cost, which is how far away is the cell from the end point. FCost which is the sum of HCost and GCost
+    // * winningIndex is the index of the cell with the lowest F cost, meaning the most optimal step to take to get to the end from the beginning.
     let winningIndex = 0;
 
+    // * replaces the optimal step with a even better step if there is one
     for (let i = 0; i < openSet.length; i++) {
       if (openSet[i].fCost < openSet[winningIndex].fCost) {
         winningIndex = i;
       }
     }
 
+    // * gets the cell object from the openSet with its index
     let winningCell = openSet[winningIndex];
     
     // needs to reset path before calling retrace path because retrace path does not clear the path array. It only adds path to it.
+    // * this tracks back which steps we have been taking to get to this point.
     path = [];
     Helper.retracePath(winningCell, path);
 
+    // * if we have reached the end
     if (winningCell == endCell) {
       console.log("Annnnnnd we are done");
       // clear out the open set as we are done.
@@ -110,19 +127,22 @@ function draw() {
     /**
      * Instead of initializing neighbors when grid is being setup and storing it in the cell, we are getting the neighbors at algorithm run time.
      */
+    // * so here we take all the neighbors of the cell we are current on, so basically figuring out where we are going to go from where ever we are right now.
     let neighbors: Array<Cell> = Helper.getNeighbors(winningCell);
     for (let i = 0; i < neighbors.length; i++) {
       let neighbor = neighbors[i];
 
-      // if the neighbor is 
+      // if the neighbor is obstructed, meaning it is an obstacle. and if it is an obstacle, we can not go there.
       if (neighbor.isObstructed) continue;
 
-      // if closedSet does not contain  
+      // * if closedSet does not contain the current neighbor we are checking
       if (closedSet.indexOf(neighbor) == -1) {
+        // this basically evaluates the g value, aka distance to the end. If this is the best way to go here, then this is the correct cost. If it is not then we will go the other way to come here instead.
         var tempG = neighbor.position.distance(endCell.position);
 
         let newG: boolean = false;
         // if openSet contains
+        // * so basically here we are initializing the cost and adding it to the openSet, meaning telling the program that this is a possible step to take next.
         if (openSet.indexOf(neighbor) != -1) {
           if (tempG < neighbor.gCost) {
             neighbor.gCost = tempG;
@@ -143,6 +163,7 @@ function draw() {
     }
 
   } else {
+    // if the code reaches here meaning it has not reached the end and it has evaluated everything that can be evaluated. so there is no solution
     if (path.filter((element) => element == endCell.position).length == 0) {
       path = [];
       console.log("No Solution");
@@ -150,6 +171,9 @@ function draw() {
     }
   }
 }
+
+
+// * below here is just to add obstacles. it adds an obstacle whereever you click on the screen.
 
 let dragging: boolean = false;
 let createObstacle: boolean = false;
@@ -214,8 +238,7 @@ namespace Helper {
     return pos.x < gridWidth && pos.x >= 0 && pos.y < gridHeight && pos.y >= 0;
   }
 
-
-
+  // * there is this constant. if this is true then the program is allowed to path find diagnally
   const corners = false;
 
   export function getNeighbors(cell: Cell): Array<Cell> {
