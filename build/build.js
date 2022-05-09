@@ -80,6 +80,8 @@ var Position = (function () {
     };
     return Position;
 }());
+var config_ConsiderCorners = false;
+var config_IgnoreGCost = true;
 var gridWidth = 20;
 var gridHeight = 20;
 var canvasWidth = 800;
@@ -148,7 +150,7 @@ function draw() {
             if (neighbor.isObstructed)
                 continue;
             if (closedSet.indexOf(neighbor) == -1) {
-                var tempG = neighbor.position.distance(endCell.position);
+                var tempG = winningCell_1.gCost + neighbor.position.distance(winningCell_1.position);
                 var newG = false;
                 if (openSet.indexOf(neighbor) != -1) {
                     if (tempG < neighbor.gCost) {
@@ -163,7 +165,7 @@ function draw() {
                 }
                 if (newG) {
                     neighbor.hCost = neighbor.position.distance(endCell.position);
-                    neighbor.fCost = neighbor.gCost + neighbor.hCost;
+                    neighbor.fCost = config_IgnoreGCost ? neighbor.hCost : neighbor.gCost + neighbor.hCost;
                     neighbor.parent = winningCell_1;
                 }
             }
@@ -221,7 +223,6 @@ var Helper;
         return pos.x < gridWidth && pos.x >= 0 && pos.y < gridHeight && pos.y >= 0;
     }
     Helper.isValidPosition = isValidPosition;
-    var corners = false;
     function getNeighbors(cell) {
         var neighbors = new Array();
         for (var i = -1; i <= 1; i++) {
@@ -229,7 +230,7 @@ var Helper;
                 if (i == 0 && j == 0) {
                     continue;
                 }
-                if (!corners && Math.abs(i) + Math.abs(j) > 1) {
+                if (!config_ConsiderCorners && Math.abs(i) + Math.abs(j) > 1) {
                     continue;
                 }
                 var x = cell.position.x + i;

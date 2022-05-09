@@ -1,6 +1,10 @@
+// program configurations
+const config_ConsiderCorners = false;
+const config_IgnoreGCost = true; // results in faster and more direct path finding but is not technically a* path finding
+
 // the grid dimensions
-const gridWidth = 20;
-const gridHeight = 20;
+let gridWidth: any = 20;
+let gridHeight: any = 20;
 
 // this is the canvas size. it is used to initialize the canvas. it is also used to calculate how big each cell should be to fit the entire canvas.
 
@@ -138,7 +142,7 @@ function draw() {
       // * if closedSet does not contain the current neighbor we are checking
       if (closedSet.indexOf(neighbor) == -1) {
         // this basically evaluates the g value, aka distance to the end. If this is the best way to go here, then this is the correct cost. If it is not then we will go the other way to come here instead.
-        var tempG = neighbor.position.distance(endCell.position);
+        var tempG = winningCell.gCost + neighbor.position.distance(winningCell.position);
 
         let newG: boolean = false;
         // if openSet contains
@@ -156,7 +160,7 @@ function draw() {
 
         if (newG) {
           neighbor.hCost = neighbor.position.distance(endCell.position);
-          neighbor.fCost = neighbor.gCost + neighbor.hCost;
+          neighbor.fCost = config_IgnoreGCost ? neighbor.hCost : neighbor.gCost + neighbor.hCost;
           neighbor.parent = winningCell;
         }
       }
@@ -239,8 +243,6 @@ namespace Helper {
   }
 
   // * there is this constant. if this is true then the program is allowed to path find diagnally
-  const corners = false;
-
   export function getNeighbors(cell: Cell): Array<Cell> {
     var neighbors = new Array<Cell>();
 
@@ -251,7 +253,7 @@ namespace Helper {
           continue;
         }
 
-        if (!corners && Math.abs(i) + Math.abs(j) > 1) {
+        if (!config_ConsiderCorners && Math.abs(i) + Math.abs(j) > 1) {
           continue;
         }
 
